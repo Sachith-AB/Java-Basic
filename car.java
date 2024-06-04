@@ -1,5 +1,5 @@
 public class car {
-    String make = "BMW";
+    String make = "BMW company";
     String model = "BMW";
     int year = 2020;
     String color = "blue";
@@ -11,5 +11,9 @@ public class car {
 
     void brake() {
         System.out.println("car is being break by me");
+    }
+
+    public String toString() {
+        return make + "\n" + model + "\n" + color + "\n" + year;
     }
 }

@@ -8,5 +8,7 @@ public class OOP {
         myCar.drive();
         myCar.brake();
 
+        System.out.println(myCar);
+
     }
 }
