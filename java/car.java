@@ -1,4 +1,4 @@
-public class car {
+public class car extends vehicle {
     String make = "BMW company";
     String model = "BMW";
     int year = 2020;
@@ -11,6 +11,10 @@ public class car {
 
     void brake() {
         System.out.println("car is being break by me");
+    }
+
+    public void go() {
+        System.out.println("this is vehicle speed");
     }
 
     public String toString() {
