@@ -1,48 +1,57 @@
 package controller;
 
+import annotation.*;
 import application.user.UserService;
-import com.sun.net.httpserver.HttpExchange;
 import domain.user.User;
+import java.util.List;
+import java.util.Optional;
 
-import java.nio.charset.StandardCharsets;
-
+@RestController
+@RequestMapping("/api/users")
 public class UserController {
-    private final UserService service;
+    private final UserService userService;
 
-    public UserController(UserService service) {
-        this.service = service;
+    public UserController(UserService userService) {
+        this.userService = userService;
     }
 
-    public User createUser(HttpExchange ex) throws Exception{
-        String requestBody = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-        User userToCreate = parseJsonToUser(requestBody);
-        User createdUser = service.createUser(userToCreate);
-        return createdUser;
+    @GetMapping
+    public List<User> getAllUsers() {
+        return userService.getAllUsers();
     }
 
-    private User parseJsonToUser(String json) {
-        // Remove whitespace and braces
-        json = json.trim().replaceAll("^\\{|\\}$", "");
+    @GetMapping("/{id}")
+    public Optional<User> getUserById(@PathVariable("id") long id) {
+        return userService.getUserById(id);
+    }
 
-        String name = "";
-        String email = "";
-
-        // Split by comma and parse key-value pairs
-        String[] pairs = json.split(",");
-        for (String pair : pairs) {
-            String[] keyValue = pair.split(":", 2);
-            if (keyValue.length == 2) {
-                String key = keyValue[0].trim().replaceAll("\"", "");
-                String value = keyValue[1].trim().replaceAll("\"", "");
-
-                if ("name".equals(key)) {
-                    name = value;
-                } else if ("email".equals(key)) {
-                    email = value;
-                }
-            }
+    @PostMapping
+    public User createUser(@RequestBody User user) {
+        // Validation
+        if (user.name() == null || user.name().trim().isEmpty()) {
+            throw new IllegalArgumentException("Name is required");
         }
-
-        return new User(0, name, email); // ID will be auto-generated
+        if (user.email() == null || !user.email().contains("@")) {
+            throw new IllegalArgumentException("Valid email is required");
+        }
+        
+        return userService.createUser(user);
     }
+
+    @PostMapping("/create")
+    public User createUserWithValidation(@RequestBody CreateUserRequest request) {
+        // Validation
+        if (request.name() == null || request.name().trim().isEmpty()) {
+            throw new IllegalArgumentException("Name is required");
+        }
+        if (request.email() == null || !request.email().contains("@")) {
+            throw new IllegalArgumentException("Valid email is required");
+        }
+        
+        User user = new User(0, request.name(), request.email());
+        return userService.createUser(user);
+    }
+
+    // DTO for create user request
+    public record CreateUserRequest(String name, String email) {}
 }

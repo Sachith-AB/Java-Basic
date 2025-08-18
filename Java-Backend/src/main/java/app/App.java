@@ -10,7 +10,7 @@ import infrastructure.db.JdbcUserRepository;
 import application.user.UserService;
 import application.user.UserServiceImpl;
 import http.HttpServeFactory;
-import http.UserHandler;
+import http.AnnotationBasedRouter;
 import com.sun.net.httpserver.HttpServer;
 
 public class App {
@@ -28,12 +28,17 @@ public class App {
         UserService userService = new UserServiceImpl(userRepo);
         UserController userController = new UserController(userService);
 
-        // Create and start HTTP server
+        // Create and start HTTP server with annotation-based routing
         HttpServer server = HttpServeFactory.create(port);
-        server.createContext("/users", new UserHandler(userService, userController));
+        server.createContext("/api/users", new AnnotationBasedRouter(userController));
 
         server.start();
         System.out.println("Server started on port " + port);
+        System.out.println("API endpoints available:");
+        System.out.println("  GET    /api/users       - Get all users");
+        System.out.println("  GET    /api/users/{id}  - Get user by ID");
+        System.out.println("  POST   /api/users       - Create user");
+        System.out.println("  POST   /api/users/create - Create user with validation");
     }
 
     private static Properties loadProps() throws IOException {
