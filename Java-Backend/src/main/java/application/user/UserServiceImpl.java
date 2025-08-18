@@ -24,7 +24,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User createUser(User user) {
-        if (email == null || !email.contains("@")) throw new IllegalArgumentException("Invalid email");
         return userRepository.save(user);
     }
 }

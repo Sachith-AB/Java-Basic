@@ -4,7 +4,6 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 /**
  * Generic JDBC repository that can work with any domain entity
@@ -28,8 +27,8 @@ public abstract class GenericJdbcRepository<T, ID> {
         List<T> entities = new ArrayList<>();
         
         try (Connection connection = dbConfig.getConnection();
-             PreparedStatement statement = connection.prepareStatement(query);
-             ResultSet resultSet = statement.executeQuery()) {
+            PreparedStatement statement = connection.prepareStatement(query);
+            ResultSet resultSet = statement.executeQuery()) {
             
             while (resultSet.next()) {
                 entities.add(mapRowToEntity(resultSet));
@@ -48,7 +47,7 @@ public abstract class GenericJdbcRepository<T, ID> {
         String query = "SELECT * FROM " + tableName + " WHERE id = ?";
         
         try (Connection connection = dbConfig.getConnection();
-             PreparedStatement statement = connection.prepareStatement(query)) {
+            PreparedStatement statement = connection.prepareStatement(query)) {
             
             setIdParameter(statement, 1, id);
             ResultSet resultSet = statement.executeQuery();
@@ -136,13 +135,19 @@ public abstract class GenericJdbcRepository<T, ID> {
 
     private T insert(T entity) {
         String query = getInsertQuery();
-        
+        System.out.println("=== Insert Operation Debug ===");
+        System.out.println("Table: " + tableName);
+        System.out.println("Query: " + query);
+        System.out.println("Entity before insert: " + entity);
+
         try (Connection connection = dbConfig.getConnection();
              PreparedStatement statement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             
             setInsertParameters(statement, entity);
             
             int affectedRows = statement.executeUpdate();
+            System.out.println("Affected rows: " + affectedRows);
+
             if (affectedRows == 0) {
                 throw new RuntimeException("Failed to insert entity into " + tableName);
             }
@@ -150,13 +155,27 @@ public abstract class GenericJdbcRepository<T, ID> {
             try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
                     ID generatedId = getGeneratedId(generatedKeys);
-                    return updateEntityWithId(entity, generatedId);
+                    System.out.println("Generated ID: " + generatedId);
+
+                    T resultEntity = updateEntityWithId(entity, generatedId);
+                    System.out.println("Entity after insert: " + resultEntity);
+                    System.out.println("=== Insert Success ===");
+
+                    return resultEntity;
                 } else {
                     throw new RuntimeException("Failed to get generated ID for " + tableName);
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error inserting entity into " + tableName, e);
+            System.err.println("=== SQL Exception during insert ===");
+            System.err.println("Table: " + tableName);
+            System.err.println("Query: " + query);
+            System.err.println("Error Code: " + e.getErrorCode());
+            System.err.println("SQL State: " + e.getSQLState());
+            System.err.println("Message: " + e.getMessage());
+            System.err.println("===================================");
+            e.printStackTrace();
+            throw new RuntimeException("Error inserting entity into " + tableName + ": " + e.getMessage(), e);
         }
     }
 
@@ -175,7 +194,15 @@ public abstract class GenericJdbcRepository<T, ID> {
             
             return entity;
         } catch (SQLException e) {
-            throw new RuntimeException("Error updating entity in " + tableName, e);
+            System.err.println("=== SQL Exception during update ===");
+            System.err.println("Table: " + tableName);
+            System.err.println("Query: " + query);
+            System.err.println("Error Code: " + e.getErrorCode());
+            System.err.println("SQL State: " + e.getSQLState());
+            System.err.println("Message: " + e.getMessage());
+            System.err.println("===================================");
+            e.printStackTrace();
+            throw new RuntimeException("Error updating entity in " + tableName + ": " + e.getMessage(), e);
         }
     }
 
